@@ -1,0 +1,21 @@
+{
+  "name": "watch-gym-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/33haji/watch-gym-bot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/33haji/watch-gym-bot/issues"
+  },
+  "homepage": "https://github.com/33haji/watch-gym-bot#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.24.2"
+  }
+}
