@@ -2,7 +2,8 @@ import { test } from '@playwright/test';
 
 test('空きがあるかどうかチェック', async ({ page }) => {
   // 操作選択ページを表示
-  await page.goto('https://user.shinjuku-shisetsu-yoyaku.jp/regasu/reserve/gin_menu');
+  const topPage = 'https://user.shinjuku-shisetsu-yoyaku.jp/regasu/reserve/gin_menu';
+  await page.goto(topPage);
 
   // 「かんたん操作」をクリック
   await page.locator('input[title="かんたん操作"]').click();
@@ -63,7 +64,7 @@ test('空きがあるかどうかチェック', async ({ page }) => {
         time = TIMES[3];
       }
       if (isAvailable) {
-        messages.push(`${date}の${time}に空きがあります！`);
+        messages.push(`${date} ${time}`);
       }
     }
     // 「次月」がある場合は次月へ遷移して再びチェック
@@ -78,6 +79,21 @@ test('空きがあるかどうかチェック', async ({ page }) => {
   // 再起的に関数を呼び出して全ての月をチェックする
   await checkAvailableDatetime();
 
-  // FIXME: Slackで送信する処理を実装する
-  console.dir(messages);
+  if (messages.length) {
+    let text = `<!channel>以下の日程で空きがあります📣\n${topPage}`;
+    messages.forEach(message => {
+      text += `\n・ ${message}`;
+    });
+    await page.request.post('https://slack.com/api/chat.postMessage', {
+      data: {
+        token: process.env.SLACK_BOT_TOKEN,
+        channel: process.env.SLACK_CHANNEL,
+        text
+      },
+      headers: {
+        'Content-type': 'application/json',
+        Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`
+      }
+    });
+  }
 });
