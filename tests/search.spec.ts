@@ -54,27 +54,33 @@ test('空きがあるかどうかチェック', async ({ page }) => {
       const cols = await tableRows.nth(i).locator('td');
       const colsLength = await cols.count();
       const titleRegexp = new RegExp('.+title="(.)".*');
-      let isAvailable = false;
-      let time = '';
       const TIMES = ['09:00~12:00', '12:20~15:20', '15:40~18:40', '19:00~22:00'];
-      if (isWeekend) {
-        // 休日の場合は全ての時刻をチェック
-        for (let j = 0; j < colsLength; j++) {
-          const targetElementInnerHtml = await cols.nth(j).first().innerHTML();
-          const targetElementTitle = targetElementInnerHtml.match(titleRegexp)?.[1] || '';
-          isAvailable = targetElementTitle === 'O';
-          time = TIMES[j];
-          if (isAvailable) break;
-        }
-      } else {
-        // 平日の場合は19:00~22:00のみチェック
-        const targetElementInnerHtml = await cols.nth(3).first().innerHTML();
+      // 休日：全ての時刻をチェック
+      // 平日：19:00~22:00のみチェック
+      const initialIndex = isWeekend ? 0 : 3;
+      for (let j = initialIndex; j < colsLength; j++) {
+        // ○かどうか確認
+        const targetElement = cols.nth(j).first();
+        const targetElementInnerHtml = await targetElement.innerHTML();
         const targetElementTitle = targetElementInnerHtml.match(titleRegexp)?.[1] || '';
-        isAvailable = targetElementTitle === 'O';
-        time = TIMES[3];
-      }
-      if (isAvailable) {
-        messages.push(`${date} ${time}`);
+        const isAvailable = targetElementTitle === 'O';
+        if (!isAvailable) continue;
+        // 予約できる状態だった場合はmessagesに追加
+        await targetElement.click();
+        const heading3Element = await page.locator('h3');
+        const heading3ElementCount = await heading3Element.count();
+        const heading3InnerHTML = heading3ElementCount > 0 ? await heading3Element.innerHTML() : '';
+        if (heading3InnerHTML.includes('選択した日付は照会のみ可能となっております。')) {
+          // 予約できる状態ではないので元のページに戻る
+          const confirmBtn = await page.locator('input[title="確定"]');
+          await confirmBtn.click();
+        } else {
+          // 予約できる状態なのでmessagesに追加
+          messages.push(`${date} ${TIMES[j]}`);
+          // 「確定」をクリックして元のページに戻る
+          const backBtn = await page.locator('img[title="前へ戻る"]');
+          await backBtn.click();
+        }
       }
     }
     // 「次月」がある場合は次月へ遷移して再びチェック
