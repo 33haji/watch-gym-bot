@@ -1,39 +1,49 @@
 import { test } from '@playwright/test';
 
+let apiContext;
+
+// Slackでメッセージを送る関数
+async function postSlackMessage(text) {
+  await apiContext.post('/api/chat.postMessage', {
+    data: {
+      token: process.env.SLACK_BOT_TOKEN,
+      channel: process.env.SLACK_CHANNEL,
+      text
+    },
+    headers: {
+      'Content-type': 'application/json',
+      Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`
+    }
+  });
+}
+
+test.beforeAll(async ({ playwright }) => {
+  apiContext = await playwright.request.newContext({
+    baseURL: 'https://slack.com',
+  });
+});
+
+// eslint-disable-next-line no-empty-pattern
+test.afterAll(async ({}, testInfo) => {
+  if (process.env.PRODUCTION && testInfo.error?.message) {
+    const errorMessage = `エラーが発生しました⚠️\nエラーメッセージ："${testInfo.error.message}"`;
+    await apiContext.post('/api/chat.postMessage', {
+      data: {
+        token: process.env.SLACK_BOT_TOKEN,
+        channel: process.env.SLACK_CHANNEL,
+        text: errorMessage
+      },
+      headers: {
+        'Content-type': 'application/json',
+        Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`
+      }
+    });
+  }
+});
+
 test('空きがあるかどうかチェック', async ({ page }) => {
-  // 操作選択ページを表示
-  const topPage = 'https://user.shinjuku-shisetsu-yoyaku.jp/regasu/reserve/gin_menu';
-  await page.goto(topPage);
-
-  // 「かんたん操作」をクリック
-  await page.locator('input[title="かんたん操作"]').click();
-
-  // 「利用者ページへ」をクリック
-  await page.locator('input[title="利用者ページへ"]').click();
-
-  // IDとPASSを入力して「確定」をクリック
-  const id = process.env.USER_ID as string;
-  const password = process.env.USER_PASSWORD as string;
-  await page.locator('input[name="g_riyoushabangou"]').fill(id);
-  await page.locator('input[name="ansyono"]').fill(password);
-  await page.locator('input[title="確定"]').click();
-
-  // 「予約申込」をクリック
-  await page.locator('input[title="予約申込"]').click();
-
-  // 「屋内スポーツ施設」 → 「四谷スポーツスクエア」 → 「四谷スポーツスクエア多目的ホール」 → 「バレーボール」 → 「確定」の順にクリック
-  await page.locator('a[title="屋内スポーツ施設"]').click();
-  await page.locator('a[title="四谷スポーツスクエア"]').click();
-  await page.locator('a[title="四谷スポーツスクエア多目的ホール"]').click();
-  await page.locator('a[title="バレーボール"]').click();
-  await page.locator('input[title="確定"]').click();
-
-  // 「表示する日付を増やす」をクリック
-  await page.locator('img[title="施設別に切替"]').click();
-
-  // 曜日と時間で空きがあるかチェック
-  const messages: string[] = [];
   // 対象の月の中で空きがあるかチェックする関数
+  const messages: string[] = [];
   async function checkAvailableDatetime() {
     const tableRows = await page.locator('tr');
     const tableRowsLength = await tableRows.count();
@@ -76,6 +86,36 @@ test('空きがあるかどうかチェック', async ({ page }) => {
     }
   }
 
+  // 操作選択ページを表示
+  const topPage = 'https://user.shinjuku-shisetsu-yoyaku.jp/regasu/reserve/gin_menu';
+  await page.goto(topPage);
+
+  // 「かんたん操作」をクリック
+  await page.locator('input[title="かんたん操作"]').click();
+
+  // 「利用者ページへ」をクリック
+  await page.locator('input[title="利用者ページへ"]').click();
+
+  // IDとPASSを入力して「確定」をクリック
+  const id = process.env.USER_ID as string;
+  const password = process.env.USER_PASSWORD as string;
+  await page.locator('input[name="g_riyoushabangou"]').fill(id);
+  await page.locator('input[name="ansyono"]').fill(password);
+  await page.locator('input[title="確定"]').click();
+
+  // 「予約申込」をクリック
+  await page.locator('input[title="予約申込"]').click();
+
+  // 「屋内スポーツ施設」 → 「四谷スポーツスクエア」 → 「四谷スポーツスクエア多目的ホール」 → 「バレーボール」 → 「確定」の順にクリック
+  await page.locator('a[title="屋内スポーツ施設"]').click();
+  await page.locator('a[title="四谷スポーツスクエア"]').click();
+  await page.locator('a[title="四谷スポーツスクエア多目的ホール"]').click();
+  await page.locator('a[title="バレーボール"]').click();
+  await page.locator('input[title="確定"]').click();
+
+  // 「表示する日付を増やす」をクリック
+  await page.locator('img[title="施設別に切替"]').click();
+
   // 再起的に関数を呼び出して全ての月をチェックする
   await checkAvailableDatetime();
 
@@ -84,16 +124,6 @@ test('空きがあるかどうかチェック', async ({ page }) => {
     messages.forEach(message => {
       text += `\n・ ${message}`;
     });
-    await page.request.post('https://slack.com/api/chat.postMessage', {
-      data: {
-        token: process.env.SLACK_BOT_TOKEN,
-        channel: process.env.SLACK_CHANNEL,
-        text
-      },
-      headers: {
-        'Content-type': 'application/json',
-        Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`
-      }
-    });
+    await postSlackMessage(text);
   }
 });
