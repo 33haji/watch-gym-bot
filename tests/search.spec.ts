@@ -1,5 +1,8 @@
 import { test } from '@playwright/test';
 
+// skipする日付（例：'9/29'）
+const SKIP_DATES = ['9/29'];
+
 let apiContext;
 
 // Slackでメッセージを送る関数
@@ -50,6 +53,7 @@ test('空きがあるかどうかチェック', async ({ page }) => {
     // 一行目は時刻の行なので除く
     for (let i = 1; i < tableRowsLength; i++) {
       const date = (await tableRows.nth(i).first().innerText()).trim() || '';
+      if (SKIP_DATES.some(SKIP_DATE => date.includes(SKIP_DATE))) continue;
       const isWeekend = ['土', '日'].some(str => date.includes(str));
       const cols = await tableRows.nth(i).locator('td');
       const colsLength = await cols.count();
