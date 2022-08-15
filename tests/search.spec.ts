@@ -45,6 +45,8 @@ test.afterAll(async ({}, testInfo) => {
 });
 
 test('空きがあるかどうかチェック', async ({ page }) => {
+  // TODO: 動作確認用なので後で消す
+  await postSlackMessage('テスト開始⏰');
   // 対象の月の中で空きがあるかチェックする関数
   const messages: string[] = [];
   async function checkAvailableDatetime() {
@@ -136,4 +138,7 @@ test('空きがあるかどうかチェック', async ({ page }) => {
     });
     await postSlackMessage(text);
   }
+
+  // TODO: 動作確認用なので後で消す
+  await postSlackMessage('テスト終了⏰');
 });
