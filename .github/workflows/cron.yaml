@@ -1,0 +1,23 @@
+name: cron-job
+on:
+  schedule:
+    - cron: '0 0-15 * * *'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14.x'
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright
+        run: npx playwright install --with-deps
+      - name: Run Playwright tests
+        run: npm run test:e2e
+        env:
+          USER_ID: ${{secrets.USER_ID}}
+          USER_PASSWORD: ${{secrets.USER_PASSWORD}}
+          SLACK_BOT_TOKEN: ${{secrets.SLACK_BOT_TOKEN}}
+          SLACK_CHANNEL: ${{secrets.SLACK_CHANNEL}}
