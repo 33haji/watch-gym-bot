@@ -1,52 +1,10 @@
 import { test } from '@playwright/test';
+import { postMessageToSlack } from '../utils';
 
 // skipする日付（例：'9/29'）
 const SKIP_DATES = ['9/29'];
 
-let apiContext;
-
-// Slackでメッセージを送る関数
-async function postSlackMessage(text) {
-  await apiContext.post('/api/chat.postMessage', {
-    data: {
-      token: process.env.SLACK_BOT_TOKEN,
-      channel: process.env.SLACK_CHANNEL,
-      text
-    },
-    headers: {
-      'Content-type': 'application/json',
-      Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`
-    }
-  });
-}
-
-test.beforeAll(async ({ playwright }) => {
-  apiContext = await playwright.request.newContext({
-    baseURL: 'https://slack.com',
-  });
-});
-
-// eslint-disable-next-line no-empty-pattern
-test.afterAll(async ({}, testInfo) => {
-  if (process.env.PRODUCTION && testInfo.error?.message) {
-    const errorMessage = `エラーが発生しました⚠️\nエラーメッセージ："${testInfo.error.message}"`;
-    await apiContext.post('/api/chat.postMessage', {
-      data: {
-        token: process.env.SLACK_BOT_TOKEN,
-        channel: process.env.SLACK_CHANNEL,
-        text: errorMessage
-      },
-      headers: {
-        'Content-type': 'application/json',
-        Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`
-      }
-    });
-  }
-});
-
 test('空きがあるかどうかチェック', async ({ page }) => {
-  // TODO: 動作確認用なので後で消す
-  await postSlackMessage('テスト開始⏰');
   // 対象の月の中で空きがあるかチェックする関数
   const messages: string[] = [];
   async function checkAvailableDatetime() {
@@ -136,9 +94,6 @@ test('空きがあるかどうかチェック', async ({ page }) => {
     messages.forEach(message => {
       text += `\n・ ${message}`;
     });
-    await postSlackMessage(text);
+    await postMessageToSlack(text);
   }
-
-  // TODO: 動作確認用なので後で消す
-  await postSlackMessage('テスト終了⏰');
 });

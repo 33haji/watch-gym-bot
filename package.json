@@ -26,6 +26,7 @@
     "eslint": "^8.21.0"
   },
   "dependencies": {
+    "@slack/web-api": "^6.7.2",
     "dotenv": "^16.0.1"
   }
 }
