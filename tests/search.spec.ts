@@ -1,8 +1,10 @@
 import { test } from '@playwright/test';
 import { postMessageToSlack } from '../utils';
 
-// skipする日付（例：'9/29'）
+// skipする日付
 const SKIP_DATES = ['9/29'];
+// 祝日
+const HOLIDAYS = ['9/19', '9/23', '10/10', '11/3', '11/23'];
 
 test('空きがあるかどうかチェック', async ({ page }) => {
   // 対象の月の中で空きがあるかチェックする関数
@@ -15,13 +17,14 @@ test('空きがあるかどうかチェック', async ({ page }) => {
       const date = (await tableRows.nth(i).first().innerText()).trim() || '';
       if (SKIP_DATES.some(SKIP_DATE => date.includes(SKIP_DATE))) continue;
       const isWeekend = ['土', '日'].some(str => date.includes(str));
+      const isHoliday = HOLIDAYS.some(HOLIDAY => date.includes(HOLIDAY));
       const cols = await tableRows.nth(i).locator('td');
       const colsLength = await cols.count();
       const titleRegexp = new RegExp('.+title="(.)".*');
       const TIMES = ['09:00~12:00', '12:20~15:20', '15:40~18:40', '19:00~22:00'];
-      // 休日：全ての時刻をチェック
+      // 休日・祝日：全ての時刻をチェック
       // 平日：19:00~22:00のみチェック
-      const initialIndex = isWeekend ? 0 : 3;
+      const initialIndex = isWeekend || isHoliday ? 0 : 3;
       for (let j = initialIndex; j < colsLength; j++) {
         // ○かどうか確認
         const targetElement = cols.nth(j).first();
