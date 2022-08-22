@@ -81,10 +81,10 @@ test('空きがあるかどうかチェック', async ({ page }) => {
   await page.locator('a[title="四谷スポーツスクエア"]').click();
   await page.locator('a[title="四谷スポーツスクエア多目的ホール"]').click();
   await page.locator('a[title="バレーボール"]').click();
+  await page.waitForTimeout(1000);
   await page.locator('input[title="確定"]').click();
 
   // 「表示する日付を増やす」をクリック
-  await page.waitForTimeout(1000);
   await page.locator('img[title="施設別に切替"]').click();
 
   // 再起的に関数を呼び出して全ての月をチェックする
