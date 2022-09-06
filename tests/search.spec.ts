@@ -108,6 +108,7 @@ test('空きがあるかどうかチェック', async ({ page }) => {
 
   // 「表示する日付を増やす」をクリック
   await page.locator('img[title="施設別に切替"]').click();
+  await page.waitForTimeout(1000);
 
   // 再起的に関数を呼び出して全ての月をチェックする
   await checkAvailableDatetime();
