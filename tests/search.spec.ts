@@ -4,7 +4,8 @@ import { postMessageToSlack } from '../utils';
 // skipする日付
 const SKIP_DATES = ['9/29'];
 // 祝日
-const HOLIDAYS = ['9/19', '9/23', '10/10', '11/3', '11/23'];
+// const HOLIDAYS = ['9/19', '9/23', '10/10', '11/3', '11/23'];
+const HOLIDAYS = ['9/19', '9/26', '9/23', '10/10', '10/24', '11/3', '11/23']; // TODO: 後で元に戻す
 
 test('空きがあるかどうかチェック', async ({ page }) => {
   // 対象の月の中で空きがあるかチェックする関数
@@ -16,8 +17,7 @@ test('空きがあるかどうかチェック', async ({ page }) => {
     for (let i = 1; i < tableRowsLength; i++) {
       const date = (await tableRows.nth(i).first().innerText()).trim() || '';
       if (SKIP_DATES.some(SKIP_DATE => date.includes(SKIP_DATE))) continue;
-      // TODO: debug用なので後で戻す
-      const isWeekend = ['土', '日'].some(str => !date.includes(str));
+      const isWeekend = ['土', '日'].some(str => date.includes(str));
       const isHoliday = HOLIDAYS.some(HOLIDAY => date.includes(HOLIDAY));
       const cols = await tableRows.nth(i).locator('td');
       const colsLength = await cols.count();
