@@ -11,6 +11,9 @@ test('空きがあるかどうかチェック', async ({ page }) => {
   // 対象の月の中で空きがあるかチェックする関数
   const messages: string[] = [];
   async function checkAvailableDatetime() {
+    // TODO: 後で消す
+    console.log('-----------checkAvailableDatetime start!--------------');
+
     const tableRows = await page.locator('tr');
     const tableRowsLength = await tableRows.count();
     // 一行目は時刻の行なので除く
@@ -33,16 +36,24 @@ test('空きがあるかどうかチェック', async ({ page }) => {
         const targetElementTitle = targetElementInnerHtml.match(titleRegexp)?.[1] || '';
         const isAvailable = targetElementTitle === 'O';
         if (!isAvailable) continue;
+        // TODO: 後で消す
+        console.log(`-----------isAvailable: ${date} ${TIMES[j]}--------------`);
+
         // 予約できる状態だった場合はmessagesに追加
         await targetElement.click();
         const heading3Element = await page.locator('h3');
         const heading3ElementCount = await heading3Element.count();
         const heading3InnerHTML = heading3ElementCount > 0 ? await heading3Element.innerHTML() : '';
+        // TODO: 後で消す
+        console.log(`-----------heading3InnerHTML: ${heading3InnerHTML}--------------`);
+
         if (heading3InnerHTML.includes('選択した日付は照会のみ可能となっております。')) {
           // 予約できる状態ではないので元のページに戻る
           const confirmBtn = await page.locator('input[title="確定"]');
           await confirmBtn.click();
         } else {
+          // TODO: 後で消す
+          console.log('-----------messages.push--------------');
           // 予約できる状態なのでmessagesに追加
           messages.push(`${date} ${TIMES[j]}`);
           // 「確定」をクリックして元のページに戻る
