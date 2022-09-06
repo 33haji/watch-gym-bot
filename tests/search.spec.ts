@@ -16,7 +16,8 @@ test('空きがあるかどうかチェック', async ({ page }) => {
     for (let i = 1; i < tableRowsLength; i++) {
       const date = (await tableRows.nth(i).first().innerText()).trim() || '';
       if (SKIP_DATES.some(SKIP_DATE => date.includes(SKIP_DATE))) continue;
-      const isWeekend = ['土', '日'].some(str => date.includes(str));
+      // TODO: debug用なので後で戻す
+      const isWeekend = ['土', '日'].some(str => !date.includes(str));
       const isHoliday = HOLIDAYS.some(HOLIDAY => date.includes(HOLIDAY));
       const cols = await tableRows.nth(i).locator('td');
       const colsLength = await cols.count();
