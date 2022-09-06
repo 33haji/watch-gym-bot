@@ -94,6 +94,9 @@ test('空きがあるかどうかチェック', async ({ page }) => {
   // 再起的に関数を呼び出して全ての月をチェックする
   await checkAvailableDatetime();
 
+  // TODO: 後で消す
+  console.log(`-----------messages: ${messages}--------------`);
+
   if (messages.length) {
     let text = `<!channel>以下の日程で空きがあります📣\n${topPage}`;
     messages.forEach(message => {

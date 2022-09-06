@@ -8,6 +8,8 @@ const removeAnsi = (error) => {
 
 // Slackでメッセージを送る
 export async function postMessageToSlack(text: string) {
+  // TODO: 後で消す
+  console.log(`-----------PRODUCTION: ${process.env.PRODUCTION}, SLACK_CHANNEL: ${process.env.SLACK_CHANNEL}, text: ${text}--------------`);
   if (!process.env.PRODUCTION || !process.env.SLACK_CHANNEL || !text) return;
 
   const client = new WebClient(process.env.SLACK_BOT_TOKEN);
