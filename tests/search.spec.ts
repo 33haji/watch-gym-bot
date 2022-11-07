@@ -4,7 +4,7 @@ import { postMessageToSlack } from '../utils';
 // skipする日付
 const SKIP_DATES = ['12/25'];
 // 祝日
-const HOLIDAYS = ['11/23'];
+const HOLIDAYS = ['11/23', '12/28'];
 
 test('空きがあるかどうかチェック', async ({ page }) => {
   // 対象の月の中で空きがあるかチェックする関数
