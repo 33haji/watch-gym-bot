@@ -35,6 +35,7 @@ test('空きがあるかどうかチェック', async ({ page }) => {
 
         // 予約できる状態だった場合はmessagesに追加
         await targetElement.click();
+        await page.waitForTimeout(1000);
         const heading3Element = await page.locator('h3');
         const heading3ElementCount = await heading3Element.count();
         const heading3InnerHTML = heading3ElementCount > 0 ? await heading3Element.innerHTML() : '';
