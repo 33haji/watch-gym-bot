@@ -12,6 +12,11 @@ class MyReporter implements Reporter {
 
   onTestEnd(test: TestCase, result: TestResult) {
     if (result.error?.message && result.retry === test.retries) {
+      // TODO: 調査用なので後で消す
+      console.log('------------result.errors-----------');
+      console.dir(result.errors);
+      console.log('------------/result.errors-----------');
+
       this.errorMessage = `エラーが発生しました⚠️\nエラーメッセージ："${result.error.message}"`;
       this.errorSnapshotInfo = result.attachments[0];
     }
