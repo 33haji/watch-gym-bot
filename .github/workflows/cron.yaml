@@ -12,6 +12,13 @@ jobs:
           node-version: '14.x'
       - name: Install dependencies
         run: npm ci
+      # Unable to connect to azure.archive.ubuntu.com:http: のエラー対応
+      # https://github.com/actions/runner-images/issues/675#issuecomment-1419388451
+      - name: Install apt-spy2
+        run: |
+          sudo gem install apt-spy2
+          sudo apt-spy2 fix --commit --launchpad --country=US
+          sudo apt-get update
       - name: Install Playwright
         run: npx playwright install --with-deps
       - name: Run Playwright tests
