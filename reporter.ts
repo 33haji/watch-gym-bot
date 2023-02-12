@@ -11,7 +11,7 @@ class MyReporter implements Reporter {
 } | undefined;
 
   onTestEnd(test: TestCase, result: TestResult) {
-    const isGotoAbortedError = (result.errors[1].stack || '').includes('page.goto: net::ERR_ABORTED; maybe frame was detached?');
+    const isGotoAbortedError = (result.errors[1]?.stack || '').includes('page.goto: net::ERR_ABORTED; maybe frame was detached?');
     if (result.error?.message && result.retry === test.retries && !isGotoAbortedError) {
       this.errorMessage = `エラーが発生しました⚠️\nエラーメッセージ："${result.error.message}"`;
       this.errorSnapshotInfo = result.attachments[0];
