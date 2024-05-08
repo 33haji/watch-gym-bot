@@ -2,7 +2,7 @@ import { test } from '@playwright/test';
 import { postMessageToSlack } from '../utils';
 
 // skipする日付
-const SKIP_DATES = ['4/4', '4/18', '4/27', '5/6', '5/30', '5/31'];
+const SKIP_DATES = ['5/30', '5/31', '6/15'];
 // 祝日
 const HOLIDAYS = ['4/29', '5/1(', '5/2(', '5/3(', '5/6', '7/15', '8/12', '9/16', '9/23', '10/14', '11/4'];
 
