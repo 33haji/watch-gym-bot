@@ -2,9 +2,9 @@ import { test } from '@playwright/test';
 import { postMessageToSlack } from '../utils';
 
 // skipする日付
-const SKIP_DATES = ['5/30', '5/31', '6/15'];
+const SKIP_DATES = ['7/13'];
 // 祝日
-const HOLIDAYS = ['4/29', '5/1(', '5/2(', '5/3(', '5/6', '7/15', '8/12', '9/16', '9/23', '10/14', '11/4'];
+const HOLIDAYS = ['7/15', '8/12', '9/16', '9/23', '10/14', '11/4'];
 
 test('空きがあるかどうかチェック', async ({ page }) => {
   // 対象の月の中で空きがあるかチェックする関数
