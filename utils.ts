@@ -34,7 +34,7 @@ export async function uploadImageToSlack(fileInfo: {
   }
 
   const client = new WebClient(process.env.SLACK_BOT_TOKEN);
-  await client.files.upload({
+  await client.files.uploadV2({
     channels: process.env.SLACK_CHANNEL,
     file: fs.createReadStream(path.resolve(fileInfo.path)),
     filename: fileInfo.name,
