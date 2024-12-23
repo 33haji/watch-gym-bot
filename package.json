@@ -20,7 +20,7 @@
   },
   "homepage": "https://github.com/33haji/watch-gym-bot#readme",
   "devDependencies": {
-    "@playwright/test": "^1.30.0",
+    "@playwright/test": "^1.49.1",
     "@typescript-eslint/eslint-plugin": "^5.51.0",
     "@typescript-eslint/parser": "^5.51.0",
     "eslint": "^8.34.0"
