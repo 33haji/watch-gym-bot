@@ -1,28 +1,29 @@
-name: cron-job
-on:
-  schedule:
-    - cron: '0,15,30,45 0-16 * * *'
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-      - name: Install dependencies
-        run: npm ci
-      # # Unable to connect to azure.archive.ubuntu.com:http: のエラー対応
-      # # https://github.com/actions/runner-images/issues/675#issuecomment-1419388451
-      # - name: Install apt-spy2
-      #   run: |
-      #     sudo gem install apt-spy2
-      #     sudo apt-spy2 fix --commit --launchpad --country=US
-      #     sudo apt-get update
-      - name: Install Playwright
-        run: npx playwright install --with-deps
-      - name: Run Playwright tests
-        run: npm run test:e2e
-        env:
-          USER_ID: ${{secrets.USER_ID}}
-          USER_PASSWORD: ${{secrets.USER_PASSWORD}}
-          SLACK_BOT_TOKEN: ${{secrets.SLACK_BOT_TOKEN}}
-          SLACK_CHANNEL: ${{secrets.SLACK_CHANNEL}}
+# TODO: 新しいシステムでの実装が完成したら戻す
+# name: cron-job
+# on:
+#   schedule:
+#     - cron: '0,15,30,45 0-16 * * *'
+# jobs:
+#   test:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v3
+#       - uses: actions/setup-node@v3
+#       - name: Install dependencies
+#         run: npm ci
+#       # # Unable to connect to azure.archive.ubuntu.com:http: のエラー対応
+#       # # https://github.com/actions/runner-images/issues/675#issuecomment-1419388451
+#       # - name: Install apt-spy2
+#       #   run: |
+#       #     sudo gem install apt-spy2
+#       #     sudo apt-spy2 fix --commit --launchpad --country=US
+#       #     sudo apt-get update
+#       - name: Install Playwright
+#         run: npx playwright install --with-deps
+#       - name: Run Playwright tests
+#         run: npm run test:e2e
+#         env:
+#           USER_ID: ${{secrets.USER_ID}}
+#           USER_PASSWORD: ${{secrets.USER_PASSWORD}}
+#           SLACK_BOT_TOKEN: ${{secrets.SLACK_BOT_TOKEN}}
+#           SLACK_CHANNEL: ${{secrets.SLACK_CHANNEL}}
