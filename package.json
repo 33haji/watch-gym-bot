@@ -20,13 +20,13 @@
   },
   "homepage": "https://github.com/33haji/watch-gym-bot#readme",
   "devDependencies": {
-    "@playwright/test": "^1.49.1",
-    "@typescript-eslint/eslint-plugin": "^5.51.0",
-    "@typescript-eslint/parser": "^5.51.0",
-    "eslint": "^8.34.0"
+    "@playwright/test": "^1.50.1",
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "eslint": "^8.57.1"
   },
   "dependencies": {
-    "@slack/web-api": "^6.8.1",
-    "dotenv": "^16.0.3"
+    "@slack/web-api": "^6.13.0",
+    "dotenv": "^16.4.7"
   }
 }
