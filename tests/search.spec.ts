@@ -28,7 +28,6 @@ test('空きがあるかどうかチェック', async ({ page }) => {
   await page.waitForTimeout(1000);
 
   // 検索条件を指定して検索
-  await page.locator('label[for="thismonth"]').click(); // 1ヶ月
   await page.locator('#bname').selectOption({ value: '1000_1030' }); // 四谷スポーツスクエア
   await page.locator('#purpose').selectOption({ value: '24_210' }); // バレーボール
   await page.locator('#btn-go').click();
