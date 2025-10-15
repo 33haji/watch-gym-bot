@@ -2,7 +2,7 @@ import { test } from '@playwright/test';
 import { postMessageToSlack } from '../utils';
 
 /** skipする日付 */
-const SKIP_DATES = ['0830', '0910', '0921'];
+const SKIP_DATES = ['0921'];
 /** 区分ごとの時間一覧 */
 const TIMES_MAP = {
   10: '09:00~12:00',
