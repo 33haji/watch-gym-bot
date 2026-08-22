@@ -2,6 +2,9 @@ name: cron-job
 on:
   schedule:
     - cron: '*/5 0-16 * * *'
+permissions:
+  # リアクションで追加されたskipする日付をcommitするため
+  contents: write
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -26,3 +29,17 @@ jobs:
           USER_PASSWORD: ${{secrets.USER_PASSWORD}}
           SLACK_BOT_TOKEN: ${{secrets.SLACK_BOT_TOKEN}}
           SLACK_CHANNEL: ${{secrets.SLACK_CHANNEL}}
+      # リアクションで追加されたskipする日付を反映する(テストが失敗した場合も反映する)
+      - name: Commit skip-dates.json
+        if: always()
+        run: |
+          if git diff --quiet -- skip-dates.json; then
+            echo "変更なし"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add skip-dates.json
+          git commit -m "skipする日付を更新"
+          git pull --rebase
+          git push
