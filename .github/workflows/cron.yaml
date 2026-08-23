@@ -55,8 +55,9 @@ jobs:
           SLACK_BOT_TOKEN: ${{secrets.SLACK_BOT_TOKEN}}
           SLACK_CHANNEL: ${{secrets.SLACK_CHANNEL}}
           # cronの起動が遅延・間引かれるため、1回の起動の中で繰り返し空きを確認する
+          # (間隔はサイトへの負荷とのバランスで2分にしている)
           LOOP_MINUTES: 50
-          CHECK_INTERVAL_SECONDS: 60
+          CHECK_INTERVAL_SECONDS: 120
       # リアクションで追加されたskipする日付を反映する(テストが失敗した場合も反映する)
       - name: Commit skip-dates.json
         if: always()
