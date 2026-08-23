@@ -18,6 +18,11 @@ $ npm run dev
 ```
 ※ UIの挙動を見ながら確認するモード
 
+```
+$ npm run test:unit
+```
+※ `utils.ts` の判定ロジックのみのテスト（ブラウザもサイトへのアクセスも不要）
+
 ### prod
 ```
 $ npm run test:e2e

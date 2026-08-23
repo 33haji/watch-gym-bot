@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "npx playwright test",
+    "test:unit": "npx playwright test tests/utils.spec.ts",
     "test:e2e": "PRODUCTION=1 npx playwright test",
     "dev": "npx playwright test --debug"
   },
