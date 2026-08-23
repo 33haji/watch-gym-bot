@@ -5,9 +5,15 @@ on:
 permissions:
   # リアクションで追加されたskipする日付をcommitするため
   contents: write
+# 1ジョブが長時間ループするため、同時に走らないようにする
+# (実行中に新しく起動した分は待機し、待機中の古い分は自動でキャンセルされる)
+concurrency:
+  group: cron-job
+  cancel-in-progress: false
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -29,6 +35,9 @@ jobs:
           USER_PASSWORD: ${{secrets.USER_PASSWORD}}
           SLACK_BOT_TOKEN: ${{secrets.SLACK_BOT_TOKEN}}
           SLACK_CHANNEL: ${{secrets.SLACK_CHANNEL}}
+          # cronの起動が遅延・間引かれるため、1回の起動の中で繰り返し空きを確認する
+          LOOP_MINUTES: 50
+          CHECK_INTERVAL_SECONDS: 60
       # リアクションで追加されたskipする日付を反映する(テストが失敗した場合も反映する)
       - name: Commit skip-dates.json
         if: always()
