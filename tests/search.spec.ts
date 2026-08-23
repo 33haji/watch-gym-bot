@@ -17,11 +17,24 @@ const LOOP_MINUTES = Number(process.env.LOOP_MINUTES || 0);
 
 /** 空きが見つかった日付 */
 type Availability = { date: string; label: string; times: string[] };
+/** サイトの構造が変わっていないかを見るための集計 */
+type ScanStats = { columns: number; statusCells: number };
+
+/** すでに通知した異常(1回の起動につき1度だけ通知する) */
+const notifiedAnomalies = new Set<string>();
+
+// サイトの異常をSlackに通知する(同じ内容は1回の起動で1度だけ)
+async function notifyAnomaly(key: string, message: string) {
+  if (notifiedAnomalies.has(key)) return;
+  notifiedAnomalies.add(key);
+  await postMessageToSlack(message);
+}
 
 /** 対象の月の中で空きがあるかチェックする関数 */
-async function checkAvailableDatetime(page: Page, skipDates: SkipDates, availabilities: Availability[]): Promise<boolean> {
+async function checkAvailableDatetime(page: Page, skipDates: SkipDates, availabilities: Availability[], stats: ScanStats): Promise<boolean> {
   const tableTheads = await page.locator('#week-info thead th[scope="col"]');
   const tableTheadsLength = await tableTheads.count();
+  stats.columns += tableTheadsLength;
   for (let i = 0; i < tableTheadsLength; i++) {
     const targetTh = tableTheads.nth(i);
     // 休日/祝日の判定
@@ -32,7 +45,7 @@ async function checkAvailableDatetime(page: Page, skipDates: SkipDates, availabi
     const monthText = spanTexts?.find(text => text.includes('月'));
     const dayText = spanTexts?.find(text => text.includes('日'));
     if (!monthText || !dayText) {
-      await postMessageToSlack(`日付の取得に失敗しました(i=${i})`);
+      await notifyAnomaly('date', `日付の取得に失敗しました(i=${i})⚠️ サイトの構造が変わった可能性があります。`);
       return false;
     }
     const currentDate = new Date();
@@ -50,7 +63,12 @@ async function checkAvailableDatetime(page: Page, skipDates: SkipDates, availabi
     if (isSkipDate(date, skipDates)) continue;
     // 空きを探す(平日は4区分目のみ、休日は1~4区分目全て)
     for (let j = isHoliday ? 10 : 40; j <= 40; j += 10) {
-      const alt = await page.locator(`[id="${date}_${j}"] img`).getAttribute('alt');
+      // 存在確認をしてから属性を読む(セルが無い場合にactionTimeoutまで待たされるのを避ける)
+      const cell = page.locator(`[id="${date}_${j}"] img`);
+      if (!await cell.count()) continue;
+      // 取得できた場合だけ数える(全く取得できない場合はサイトの構造が変わった可能性がある)
+      stats.statusCells++;
+      const alt = await cell.getAttribute('alt');
       if (alt !== '空き') continue;
       // 空きがあった場合はavailabilitiesに日付単位で追加
       const time = TIMES_MAP[j as keyof typeof TIMES_MAP];
@@ -63,9 +81,14 @@ async function checkAvailableDatetime(page: Page, skipDates: SkipDates, availabi
     }
   }
   // 次の週へ遷移して再びチェック
-  await page.locator('#next-week').click();
+  const nextWeek = page.locator('#next-week');
+  if (!await nextWeek.count()) {
+    await notifyAnomaly('next-week', '「翌週」ボタンが見つかりませんでした⚠️ サイトの構造が変わった可能性があります。');
+    return false;
+  }
+  await nextWeek.click();
   await page.waitForTimeout(1000);
-  return await checkAvailableDatetime(page, skipDates, availabilities);
+  return await checkAvailableDatetime(page, skipDates, availabilities, stats);
 }
 
 // 空きを1回チェックして、まだ通知していない空きがあれば通知する
@@ -87,9 +110,20 @@ async function checkAndNotify(page: Page, notified: Set<string>) {
 
   // 再起的に関数を呼び出して全ての日付をチェックする
   const availabilities: Availability[] = [];
-  const result = await checkAvailableDatetime(page, skipDates, availabilities);
+  const stats: ScanStats = { columns: 0, statusCells: 0 };
+  const result = await checkAvailableDatetime(page, skipDates, availabilities, stats);
   if (!result) return;
   await page.waitForTimeout(1000);
+
+  // 「空きなし」とサイトの構造変更を区別できるよう、何も取得できていない場合は通知する
+  if (!stats.columns) {
+    await notifyAnomaly('columns', '週表示の日付を1つも取得できませんでした⚠️ サイトの構造が変わった可能性があります。');
+    return;
+  }
+  if (!stats.statusCells) {
+    await notifyAnomaly('cells', '空き状況のセルを1つも取得できませんでした⚠️ サイトの構造が変わった可能性があります。');
+    return;
+  }
 
   // 日付ごとにリアクションを付けられるよう、1日付につき1メッセージを送る
   let isFirstMessage = true;
