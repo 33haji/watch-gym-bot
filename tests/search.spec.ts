@@ -64,13 +64,14 @@ test('空きがあるかどうかチェック', async ({ page }) => {
       const day = dayText.replace('日', '').padStart(2, '0');
       const year = currentDate.getMonth() + 1 <= parseInt(month, 10) ? currentDate.getFullYear() : currentDate.getFullYear() + 1;
       const date = `${year}${month}${day}`;
-      // スキップする日付の場合はreturn
-      if (isSkipDate(date, skipDates)) continue;
       // 2ヶ月以上先に突入したらreturn
+      // (skip判定より先に行わないと、skipする日付が続いた場合に終了できず再帰が止まらなくなる)
       const targetDate = new Date(year, parseInt(month, 10) - 1, parseInt(day, 10));
       const twoMonthsLater = new Date();
       twoMonthsLater.setMonth(currentDate.getMonth() + 2);
       if (targetDate > twoMonthsLater) return true;
+      // スキップする日付の場合はreturn
+      if (isSkipDate(date, skipDates)) continue;
       // 空きを探す(平日は4区分目のみ、休日は1~4区分目全て)
       for (let j = isHoliday ? 10 : 40; j <= 40; j += 10) {
         const alt = await page.locator(`#\\00003${date}_${j} img`).getAttribute('alt');
