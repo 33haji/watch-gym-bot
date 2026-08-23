@@ -143,35 +143,45 @@ async function checkAndNotify(page: Page, notified: Set<string>) {
   }
 }
 
-test('空きがあるかどうかチェック', async ({ page }) => {
-  // ループする場合はその分テスト全体のtimeoutを延ばす
-  test.setTimeout((LOOP_MINUTES + 5) * 60 * 1000);
-
-  // トップページにアクセスしてログインページへ
+// トップページからログインする
+async function login(page: Page) {
   await page.goto(TOP_PAGE);
   await page.waitForTimeout(1000);
   await page.locator('#btn-login').click();
   await page.waitForTimeout(1000);
-
-  // ログイン
   const id = process.env.USER_ID as string;
   const password = process.env.USER_PASSWORD as string;
   await page.locator('#userId').fill(id);
   await page.locator('#password').fill(password);
   await page.locator('#btn-go').click();
   await page.waitForTimeout(1000);
+}
+
+test('空きがあるかどうかチェック', async ({ page }) => {
+  // ループする場合はその分テスト全体のtimeoutを延ばす
+  test.setTimeout((LOOP_MINUTES + 5) * 60 * 1000);
+
+  await login(page);
 
   // GitHubのcronは指定どおりに起動しないため、1回の起動の中で繰り返し確認する
   // (ログインは使い回すので、1回あたりのアクセスは初回より軽い)
   /** この実行ですでに通知した枠 */
   const notified = new Set<string>();
   const deadline = Date.now() + LOOP_MINUTES * 60 * 1000;
-  for (;;) {
-    await checkAndNotify(page, notified);
+  for (let round = 0; ; round++) {
+    try {
+      await checkAndNotify(page, notified);
+    } catch (error) {
+      // 1周目で失敗した場合はそのまま失敗させ、Playwrightのリトライに任せる
+      if (round === 0) throw error;
+      // 2周目以降の一時的な失敗でジョブ全体を落とすと、残りの時間を監視できなくなるため続行する
+      await notifyAnomaly('check', `空きの確認中にエラーが発生しました⚠️\n${(error as Error).message}`);
+      await login(page).catch(() => { /* 次の周回で再試行する */ });
+    }
     if (Date.now() + CHECK_INTERVAL_SECONDS * 1000 >= deadline) break;
     await page.waitForTimeout(CHECK_INTERVAL_SECONDS * 1000);
-    // ホームに戻ってから次の検索を行う
-    await page.locator('#nav-home').click();
+    // ホームに戻ってから次の検索を行う(戻れない場合はログインからやり直す)
+    await page.locator('#nav-home').click().catch(() => login(page));
     await page.waitForTimeout(1500);
   }
 });
