@@ -1,5 +1,5 @@
 import { test, Page } from '@playwright/test';
-import { SKIP_MARKER, SkipDates, isSkipDate, loadSkipDates, postMessageToSlack, syncSkipDatesFromReactions } from '../utils';
+import { SKIP_MARKER, SkipDates, dateAfterMonthsInJst, isSkipDate, loadSkipDates, postMessageToSlack, syncSkipDatesFromReactions, todayInJst } from '../utils';
 
 /** 区分ごとの時間一覧 */
 const TIMES_MAP = {
@@ -48,17 +48,15 @@ async function checkAvailableDatetime(page: Page, skipDates: SkipDates, availabi
       await notifyAnomaly('date', `日付の取得に失敗しました(i=${i})⚠️ サイトの構造が変わった可能性があります。`);
       return false;
     }
-    const currentDate = new Date();
+    // 日付の年はサイトに表示されないため、日本時間の今日を基準に推定する
+    const today = todayInJst();
     const month = monthText.replace('月', '').padStart(2, '0');
     const day = dayText.replace('日', '').padStart(2, '0');
-    const year = currentDate.getMonth() + 1 <= parseInt(month, 10) ? currentDate.getFullYear() : currentDate.getFullYear() + 1;
+    const year = Number(today.slice(4, 6)) <= parseInt(month, 10) ? Number(today.slice(0, 4)) : Number(today.slice(0, 4)) + 1;
     const date = `${year}${month}${day}`;
     // 2ヶ月以上先に突入したらreturn
     // (skip判定より先に行わないと、skipする日付が続いた場合に終了できず再帰が止まらなくなる)
-    const targetDate = new Date(year, parseInt(month, 10) - 1, parseInt(day, 10));
-    const twoMonthsLater = new Date();
-    twoMonthsLater.setMonth(currentDate.getMonth() + 2);
-    if (targetDate > twoMonthsLater) return true;
+    if (date > dateAfterMonthsInJst(2)) return true;
     // スキップする日付の場合はreturn
     if (isSkipDate(date, skipDates)) continue;
     // 空きを探す(平日は4区分目のみ、休日は1~4区分目全て)

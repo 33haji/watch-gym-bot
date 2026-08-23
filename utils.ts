@@ -36,13 +36,26 @@ export type SkipDates = {
   oneTime: string[];
 };
 
+// DateをYYYYMMDD形式にする(UTCとして解釈する)
+function formatDate(date: Date): string {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  return `${year}${month}${day}`;
+}
+
 // 日本時間の今日の日付(YYYYMMDD)を返す
 export function todayInJst(): string {
-  const jst = new Date(Date.now() + 9 * 60 * 60 * 1000);
-  const year = jst.getUTCFullYear();
-  const month = String(jst.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(jst.getUTCDate()).padStart(2, '0');
-  return `${year}${month}${day}`;
+  return formatDate(new Date(Date.now() + 9 * 60 * 60 * 1000));
+}
+
+// 日本時間の今日からnヶ月後の日付(YYYYMMDD)を返す
+export function dateAfterMonthsInJst(months: number): string {
+  const today = todayInJst();
+  const year = Number(today.slice(0, 4));
+  const month = Number(today.slice(4, 6));
+  const day = Number(today.slice(6, 8));
+  return formatDate(new Date(Date.UTC(year, month - 1 + months, day)));
 }
 
 // skipする日付の定義を読み込む
