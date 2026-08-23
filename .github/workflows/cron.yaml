@@ -26,8 +26,23 @@ jobs:
       #     sudo gem install apt-spy2
       #     sudo apt-spy2 fix --commit --launchpad --country=US
       #     sudo apt-get update
+      # ブラウザのダウンロードが実行時間の大半を占めるためキャッシュする
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> $GITHUB_OUTPUT
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{runner.os}}-playwright-${{steps.playwright-version.outputs.version}}
       - name: Install Playwright
-        run: npx playwright install --with-deps
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+      # キャッシュを使う場合もOS側の依存パッケージは入れておく
+      - name: Install Playwright dependencies
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
       - name: Run Playwright tests
         run: npm run test:e2e
         env:
