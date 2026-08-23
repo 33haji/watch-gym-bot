@@ -2,6 +2,8 @@ name: cron-job
 on:
   schedule:
     - cron: '*/5 0-16 * * *'
+  # 手動でも実行できるようにする
+  workflow_dispatch:
 permissions:
   # リアクションで追加されたskipする日付をcommitするため
   contents: write
@@ -15,8 +17,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
       - name: Install dependencies
         run: npm ci
       # # Unable to connect to azure.archive.ubuntu.com:http: のエラー対応
@@ -32,7 +36,7 @@ jobs:
         run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> $GITHUB_OUTPUT
       - name: Cache Playwright browsers
         id: playwright-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: ${{runner.os}}-playwright-${{steps.playwright-version.outputs.version}}
