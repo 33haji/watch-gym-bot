@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { SKIP_MARKER, SkipDates, dateAfterMonthsInJst, extractSkipDates, isSkipDate, isSkipReaction, loadSkipDates, todayInJst } from '../utils';
+import { SKIP_MARKER, SkipDates, dateAfterMonthsInJst, extractSkipDates, isSiteOpenInJst, isSkipDate, isSkipReaction, loadSkipDates, loopDeadline, todayInJst } from '../utils';
 
 /** テスト用の未来の日付(過去日として除外されないよう常に1ヶ月後を使う) */
 const FUTURE_DATE = dateAfterMonthsInJst(1);
@@ -86,6 +86,46 @@ test.describe('日付の計算', () => {
 
   test('dateAfterMonthsInJstは未来の日付を返す', () => {
     expect(Number(dateAfterMonthsInJst(2))).toBeGreaterThan(Number(todayInJst()));
+  });
+});
+
+test.describe('サイトの利用時間', () => {
+  /** 日本時間のYYYY/MM/DD HH:MMに対応するタイムスタンプ */
+  const jst = (year: number, month: number, day: number, hour: number, minute = 0) => {
+    return Date.UTC(year, month - 1, day, hour - 9, minute);
+  };
+  const MINUTE = 60 * 1000;
+
+  test('isSiteOpenInJstは9:00~翌2:00の間だけtrueを返す', () => {
+    expect(isSiteOpenInJst(jst(2026, 8, 24, 8, 59))).toBe(false);
+    expect(isSiteOpenInJst(jst(2026, 8, 24, 9, 0))).toBe(true);
+    expect(isSiteOpenInJst(jst(2026, 8, 24, 23, 30))).toBe(true);
+    expect(isSiteOpenInJst(jst(2026, 8, 25, 1, 59))).toBe(true);
+    expect(isSiteOpenInJst(jst(2026, 8, 25, 2, 0))).toBe(false);
+    // 今回3時台の通知が発生した時間帯
+    expect(isSiteOpenInJst(jst(2026, 8, 25, 3, 2))).toBe(false);
+  });
+
+  test('利用終了まで余裕がある場合は起動からLOOP_MINUTES後を返す', () => {
+    const now = jst(2026, 8, 24, 10, 0);
+    expect(loopDeadline(now, 50)).toBe(now + 50 * MINUTE);
+  });
+
+  test('利用終了をまたぐ場合は日本時間の2:00で打ち切る', () => {
+    const now = jst(2026, 8, 25, 1, 30);
+    expect(loopDeadline(now, 50)).toBe(jst(2026, 8, 25, 2, 0));
+  });
+
+  test('日付をまたぐ場合も翌日の2:00で打ち切る', () => {
+    const now = jst(2026, 8, 24, 23, 50);
+    expect(loopDeadline(now, 50)).toBe(jst(2026, 8, 25, 0, 40));
+    expect(loopDeadline(now, 300)).toBe(jst(2026, 8, 25, 2, 0));
+  });
+
+  test('利用時間外に起動された場合はループしない', () => {
+    // cronの遅延と待機で起動が2:41までずれ込んだケース
+    const now = jst(2026, 8, 25, 2, 41);
+    expect(loopDeadline(now, 50)).toBe(now);
   });
 });
 

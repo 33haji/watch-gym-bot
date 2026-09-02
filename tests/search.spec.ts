@@ -1,5 +1,5 @@
 import { test, Page } from '@playwright/test';
-import { SKIP_MARKER, SkipDates, dateAfterMonthsInJst, isSkipDate, loadSkipDates, postMessageToSlack, syncSkipDatesFromReactions, todayInJst } from '../utils';
+import { SKIP_MARKER, SkipDates, dateAfterMonthsInJst, isSiteOpenInJst, isSkipDate, loadSkipDates, loopDeadline, postMessageToSlack, syncSkipDatesFromReactions, todayInJst } from '../utils';
 
 /** 区分ごとの時間一覧 */
 const TIMES_MAP = {
@@ -158,8 +158,16 @@ async function login(page: Page) {
 }
 
 test('空きがあるかどうかチェック', async ({ page }) => {
+  const startedAt = Date.now();
+  // cronの起動は大きく遅延するため、利用時間外まで押し出された場合は何もせず終了する
+  // (手動実行は動作確認のためスキップしない)
+  const isScheduled = process.env.GITHUB_EVENT_NAME === 'schedule';
+  test.skip(isScheduled && !isSiteOpenInJst(startedAt), 'サイトの利用時間外のため実行しません');
+
+  /** 空きの確認を打ち切る時刻(起動からLOOP_MINUTES後、または日本時間の利用終了時刻の早い方) */
+  const deadline = loopDeadline(startedAt, LOOP_MINUTES);
   // ループする場合はその分テスト全体のtimeoutを延ばす
-  test.setTimeout((LOOP_MINUTES + 5) * 60 * 1000);
+  test.setTimeout(deadline - startedAt + 5 * 60 * 1000);
 
   await login(page);
 
@@ -167,7 +175,6 @@ test('空きがあるかどうかチェック', async ({ page }) => {
   // (ログインは使い回すので、1回あたりのアクセスは初回より軽い)
   /** この実行ですでに通知した枠 */
   const notified = new Set<string>();
-  const deadline = Date.now() + LOOP_MINUTES * 60 * 1000;
   for (let round = 0; ; round++) {
     try {
       await checkAndNotify(page, notified);

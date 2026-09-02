@@ -20,6 +20,38 @@ const SKIP_REACTION_NAMES = [
 /** リアクションを読み取る対象期間(日) */
 const REACTION_LOOKBACK_DAYS = 14;
 
+/** サイトの利用時間(日本時間)。この範囲を外れるとサイトが「サービス提供時間外」の画面になる */
+export const SITE_OPEN_HOUR_JST = 9;
+export const SITE_CLOSE_HOUR_JST = 2;
+
+const HOUR_MS = 60 * 60 * 1000;
+const DAY_MS = 24 * HOUR_MS;
+const JST_OFFSET_MS = 9 * HOUR_MS;
+
+// 日本時間の0:00からの経過時間(時間単位。1:30なら1.5)を返す
+function hourInJst(now: number): number {
+  return ((now + JST_OFFSET_MS) % DAY_MS) / HOUR_MS;
+}
+
+// サイトの利用時間内かどうか(9:00~翌2:00)
+export function isSiteOpenInJst(now: number): boolean {
+  const hour = hourInJst(now);
+  return hour >= SITE_OPEN_HOUR_JST || hour < SITE_CLOSE_HOUR_JST;
+}
+
+// 空きの確認を繰り返す期限(ms)を返す
+// cronの起動は大きく遅延するため、起動からの経過時間だけでなく日本時間の利用終了時刻でも打ち切る
+// (利用時間外に起動された場合はnowを返し、ループせずに終了させる)
+export function loopDeadline(now: number, loopMinutes: number): number {
+  if (!isSiteOpenInJst(now)) return now;
+  const hour = hourInJst(now);
+  /** 日本時間の今日の0:00 */
+  const midnight = now - hour * HOUR_MS;
+  // 利用終了は日本時間の2:00。9:00以降に起動した場合は翌日の2:00になる
+  const closing = midnight + SITE_CLOSE_HOUR_JST * HOUR_MS + (hour >= SITE_CLOSE_HOUR_JST ? DAY_MS : 0);
+  return Math.min(now + loopMinutes * 60 * 1000, closing);
+}
+
 // skip登録として扱うリアクションかどうか(🙅‍♂️🙅‍♀️や肌色違いも同じ扱いにする)
 export function isSkipReaction(name: string): boolean {
   // スキントーン等の修飾を除き、区切り文字の違い(_と-)を吸収する
